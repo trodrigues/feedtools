@@ -1,5 +1,6 @@
 var flatiron = require('flatiron'),
     util = require('util'),
+    _ = require('underscore'),
     app = flatiron.app;
 
 app.use(flatiron.plugins.http);
@@ -53,7 +54,9 @@ app.router.post('/filter/repeatedkeywords', function () {
       }
     }
 
-    if(hits > 0){
+    hitTerms = _.uniq(hitTerms);
+
+    if(hits > 1){
       indexesForRemoval.push(idx);
       console.log('> Removing items with:');
       console.log('Title: '+val.title);
