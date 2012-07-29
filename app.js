@@ -21,8 +21,9 @@ app.router.post('/filter/repeatedkeywords', function () {
   var terms = [];
   console.log(util.inspect(response.items));
   response.items.forEach(function(val, idx) {
-    var extractedTerms = val['loop:termextraction'];
-    extractedTerms.forEach(function(val, idx) {
+    var extractedTerms = val['loop:termextraction'],
+        extractedTermsList = (!util.isArray(extractedTerms)) ? [extractedTerms] : extractedTerms;
+    extractedTermsList.forEach(function(val, idx) {
       terms.push(val.content);
     });
   });
@@ -30,12 +31,13 @@ app.router.post('/filter/repeatedkeywords', function () {
   var indexesForRemoval = [];
   response.items.forEach(function(val, idx) {
     var extractedTerms = val['loop:termextraction'],
+        extractedTermsList = (!util.isArray(extractedTerms)) ? [extractedTerms] : extractedTerms;
         hits = 0,
         hitTerms = [];
-    for(var i=0; i<extractedTerms.length; i++){
-      if(terms.indexOf(extractedTerms[i].content) > -1){
+    for(var i=0; i<extractedTermsList.length; i++){
+      if(terms.indexOf(extractedTermsList[i].content) > -1){
         hits++;
-        hitTerms.push(extractedTerms[i].content);
+        hitTerms.push(extractedTermsList[i].content);
       }
     }
 
