@@ -20,7 +20,7 @@ app.router.post('/filter/repeatedkeywords', function () {
   console.log(response);
 
   this.res.writeHead(200, { 'Content-Type': 'application/json' });
-  this.res.end(JSON.stringify(response));
+  this.res.end(JSON.stringify({items: response}));
 });
 
 app.start(3040);
