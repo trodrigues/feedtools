@@ -19,13 +19,15 @@ app.router.post('/filter/repeatedkeywords', function () {
   }
 
   var terms = [];
-  console.log(util.inspect(response.items));
   response.items.forEach(function(val, idx) {
     var extractedTerms = val['loop:termextraction'],
         extractedTermsList = (!util.isArray(extractedTerms)) ? [extractedTerms] : extractedTerms;
-    extractedTermsList.forEach(function(val, idx) {
-      if(val && val.content){
-        terms.push(val.content);
+    extractedTermsList.forEach(function(innerval, idx) {
+      if(innerval && innerval.content && val.guid && val.guid.content){
+        terms.push({
+          content: innerval.content,
+          id: val.guid.content
+        });
       }
     });
   });
@@ -36,9 +38,12 @@ app.router.post('/filter/repeatedkeywords', function () {
         extractedTermsList = (!util.isArray(extractedTerms)) ? [extractedTerms] : extractedTerms;
         hits = 0,
         hitTerms = [];
+
     for(var i=0; i<extractedTermsList.length; i++){
       if(extractedTermsList[i] && extractedTermsList[i].content){
-        if(terms.indexOf(extractedTermsList[i].content) > -1){
+        if(terms.content.indexOf(extractedTermsList[i].content) > -1 &&
+           val.guid && val.guid.content && val.guid.content !== terms.id
+          ){
           hits++;
           hitTerms.push(extractedTermsList[i].content);
         }
