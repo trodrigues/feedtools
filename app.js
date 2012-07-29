@@ -8,13 +8,19 @@ app.router.get('/', function (data) {
   this.res.end('Hello. I have nothing for you. Goodbye.');
 });
 
-app.router.post('/filter/repeatedkeywords', function (data) {
-  var response = data;
+app.router.post('/filter/repeatedkeywords', function () {
+  try {
+    var response = JSON.parse(this.req.body.data);
+  } catch(err){
+    console.log("error parsing data");
+    this.res.writeHead(502);
+    this.res.end("error parsing data");
+  }
 
-  console.log(data);
+  console.log(response);
 
   this.res.writeHead(200, { 'Content-Type': 'application/json' });
-  this.res.end(response);
+  this.res.end(JSON.stringify(response));
 });
 
 app.start(3040);
