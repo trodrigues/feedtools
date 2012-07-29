@@ -17,11 +17,27 @@ app.router.post('/filter/repeatedkeywords', function () {
     this.res.end("error parsing data");
   }
 
+  var terms = [];
   response.items.forEach(function(val, idx) {
-    console.log(val['loop:termextraction']);
+    terms.push(val['loop:termextraction']);
   });
 
-  console.log("Parsed request");
+  var indexesForRemoval = [];
+  response.items.forEach(function(val, idx) {
+    if(terms.indexOf(val['loop:termextraction']) > -1){
+      indexesForRemoval.push(idx);
+      console.log('> Removing items with:');
+      console.log('Title: '+val.title);
+      console.log('Link: '+val.link);
+      console.log('Terms: '+val['loop:termextraction']);
+    }
+  });
+
+  indexesForRemoval.forEach(function(val, idx) {
+    response.items.splice(val, 1);
+  });
+
+  console.log("Parsed request. Removed "+indexesForRemoval.length+" items.\n\n");
 
   this.res.writeHead(200, { 'Content-Type': 'application/json' });
   this.res.end(JSON.stringify({items: response.items}));
