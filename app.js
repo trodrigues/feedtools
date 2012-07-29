@@ -24,6 +24,7 @@ app.router.post('/filter/repeatedkeywords', function () {
     var extractedTerms = val['loop:termextraction'],
         extractedTermsList = (!util.isArray(extractedTerms)) ? [extractedTerms] : extractedTerms;
     extractedTermsList.forEach(function(val, idx) {
+      console.log('parsing value:', val);
       terms.push(val.content);
     });
   });
