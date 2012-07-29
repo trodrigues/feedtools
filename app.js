@@ -1,4 +1,5 @@
 var flatiron = require('flatiron'),
+    util = require('util'),
     app = flatiron.app;
 
 app.use(flatiron.plugins.http);
@@ -29,7 +30,7 @@ app.router.post('/filter/repeatedkeywords', function () {
       console.log('> Removing items with:');
       console.log('Title: '+val.title);
       console.log('Link: '+val.link);
-      console.log('Terms: '+val['loop:termextraction']);
+      console.log('Terms: '+util.inspect(val['loop:termextraction']));
     }
   });
 
