@@ -24,8 +24,9 @@ app.router.post('/filter/repeatedkeywords', function () {
     var extractedTerms = val['loop:termextraction'],
         extractedTermsList = (!util.isArray(extractedTerms)) ? [extractedTerms] : extractedTerms;
     extractedTermsList.forEach(function(val, idx) {
-      console.log('parsing value:', val);
-      terms.push(val.content);
+      if(val && val.content){
+        terms.push(val.content);
+      }
     });
   });
 
@@ -36,9 +37,11 @@ app.router.post('/filter/repeatedkeywords', function () {
         hits = 0,
         hitTerms = [];
     for(var i=0; i<extractedTermsList.length; i++){
-      if(terms.indexOf(extractedTermsList[i].content) > -1){
-        hits++;
-        hitTerms.push(extractedTermsList[i].content);
+      if(extractedTermsList[i] && extractedTermsList[i].content){
+        if(terms.indexOf(extractedTermsList[i].content) > -1){
+          hits++;
+          hitTerms.push(extractedTermsList[i].content);
+        }
       }
     }
 
