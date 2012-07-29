@@ -20,17 +20,30 @@ app.router.post('/filter/repeatedkeywords', function () {
 
   var terms = [];
   response.items.forEach(function(val, idx) {
-    terms.push(val['loop:termextraction']);
+    var extractedTerms = val['loop:termextraction'];
+    extractedTerms.forEach(function(val, idx) {
+      terms.push(val.content);
+    });
   });
 
   var indexesForRemoval = [];
   response.items.forEach(function(val, idx) {
-    if(terms.indexOf(val['loop:termextraction']) > -1){
+    var extractedTerms = val['loop:termextraction'],
+        hits = 0,
+        hitTerms = [];
+    for(var i=0; i<extractedTerms.length; i++){
+      if(terms.indexOf(extractedTerms[i].content) > -1){
+        hits++;
+        hitTerms.push(extractedTerms[i].content);
+      }
+    }
+
+    if(hits > 0){
       indexesForRemoval.push(idx);
       console.log('> Removing items with:');
       console.log('Title: '+val.title);
       console.log('Link: '+val.link);
-      console.log('Terms: '+util.inspect(val['loop:termextraction']));
+      console.log('Terms: '+util.inspect(hitTerms));
     }
   });
 
