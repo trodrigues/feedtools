@@ -19,6 +19,7 @@ app.router.post('/filter/repeatedkeywords', function () {
   }
 
   var terms = [];
+  console.log(util.inspect(response.items));
   response.items.forEach(function(val, idx) {
     var extractedTerms = val['loop:termextraction'];
     extractedTerms.forEach(function(val, idx) {
