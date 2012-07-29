@@ -17,10 +17,14 @@ app.router.post('/filter/repeatedkeywords', function () {
     this.res.end("error parsing data");
   }
 
-  console.log(response);
+  response.items.forEach(function(val, idx) {
+    console.log(val['loop:termextraction']);
+  });
+
+  console.log("Parsed request");
 
   this.res.writeHead(200, { 'Content-Type': 'application/json' });
-  this.res.end(JSON.stringify({items: response}));
+  this.res.end(JSON.stringify({items: response.items}));
 });
 
 app.start(3040);
