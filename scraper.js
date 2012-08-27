@@ -1,8 +1,7 @@
-var jsdom = require('jsdom'),
+var exec = require('child_process').exec,
     fs = require('fs'),
     util = require('util'),
-    EventEmitter2 = require('eventemitter2').EventEmitter2,
-    jquery = fs.readFileSync(__dirname+'/jquery-1.7.2.js').toString();
+    EventEmitter2 = require('eventemitter2').EventEmitter2;
 
 var THROTTLE_TIME = 1000;
 
@@ -25,28 +24,32 @@ function getGuidLink(item) {
   return item.link;
 }
 
-function Scraper() {
+function Scraper(logger) {
+  this.logger = logger;
 }
 util.inherits(Scraper, EventEmitter2);
 
-Scraper.prototype.dom = function(url, index) {
-  var self = this;
+Scraper.prototype.scrape = function(url, index) {
   var waitTime = THROTTLE_TIME * index;
-  setTimeout(function() {
-    jsdom.env({
-      html: url,
-      src: [
-        jquery
-      ], 
-      done: function(errors, window) {
-        if(errors){
-          self.emit('fetchError', index, url, errors);
-        } else {
-          self.emit('fetched', index, url, window, window.$);
-        }
+  setTimeout(function(url, index) {
+    var self = this,
+        url = url,
+        index = index;
+
+    this.logger.info('scraping url '+ index +': '+url);
+    exec('phantomjs phantom.js "'+ url +'"', function(error, stdout, stderr) {
+      if(error === null && stdout.length > 0){
+        self.emit('fetched', index, url, stdout);
+      } else {
+        self.emit('fetchError', index, url, {
+          stderr: stderr,
+          stdout: stdout,
+          error: error
+        });
       }
     });
-  }, waitTime);
+  }.bind(this, url, index), waitTime);
+
 };
 
 
@@ -59,7 +62,7 @@ Scraper.prototype.parseItemList = function(items) {
   this.on('fetchError', this.handleFetchCount.bind(this, itemsLength));
 
   for(var i=0; i<itemsLength; i++){
-    this.dom(getGuidLink(items[i]), i);
+    this.scrape(getGuidLink(items[i]), i);
   }
 };
 
@@ -74,7 +77,7 @@ Scraper.prototype.handleFetchCount = function(itemsLength) {
 
 
 module.exports = {
-  createScraper: function() {
-    return new Scraper();
+  createScraper: function(logger) {
+    return new Scraper(logger);
   }
 };

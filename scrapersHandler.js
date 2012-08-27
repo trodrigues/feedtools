@@ -1,16 +1,6 @@
-var scraper = require('./scraper').createScraper();
-
-function scrapeContent(url, window, $) {
-  if(/^http(s)?:\/\/.*wired\.com/g.test(url)){
-    return $('.post .entry').html();
-  }
-
-  if(/^http(s)?:\/\/.*(publico.pt|PublicoRSS)/g.test(url)){
-    return $('#content').html();
-  }
-}
-
 module.exports = function(logger) {
+  var scraper = require('./scraper').createScraper(logger);
+
   return function() {
     var self = this;
 
@@ -26,9 +16,12 @@ module.exports = function(logger) {
 
     logger.info('Scraping '+items.length+' items');
 
-    scraper.on('fetched', function(index, url, window, $) {
-      logger.info('scraping '+url);
-      items[index]['content:scraped'] = scrapeContent(url, window, $);
+    scraper.on('fetched', function(index, url, scrapedContent) {
+      if(scrapedContent.indexOf('Error:') === 0){
+        logger.error(scrapedContent);
+      } else {
+        items[index]['content:scraped'] = scrapedContent;
+      }
     });
 
     scraper.on('fetchError', function(index, url, errors) {

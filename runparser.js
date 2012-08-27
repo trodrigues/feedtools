@@ -1,15 +1,4 @@
 #!/usr/bin/env node
-
-/*
-var scraper = require('./Scraper').createScraper();
-
-scraper.on('fetched', function(index, url, window, $) {
-  console.log($('.post .entry').html());
-});
-
-scraper.dom('http://feeds.wired.com/~r/wired/index/~3/onYkLIy-qgw/');
-*/
-
 var request = require('request'),
     util = require('util'),
     fs = require('fs');
@@ -28,3 +17,4 @@ request('http://pipes.yahoo.com/pipes/pipe.run?_id=jtJEtdKi3RGNZTyppgt1Yg&_rende
     })
   }
 });
+
