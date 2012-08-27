@@ -14,6 +14,6 @@ app.router.get('/', function (data) {
 });
 
 app.router.post('/filter/repeatedkeywords', repeatedKeywords);
-app.router.post('/scraper/wired', scrapers.wired);
+app.router.post('/scraper', scrapers);
 
 app.start(3040);

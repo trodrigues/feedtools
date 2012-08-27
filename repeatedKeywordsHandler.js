@@ -1,5 +1,5 @@
 var util = require('util'),
-    _ = require('underscore'),
+    _ = require('underscore');
 
 module.exports = function(logger) {
   return function () {
