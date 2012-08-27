@@ -2,7 +2,7 @@
 
 var scraper = require('./Scraper').createScraper();
 
-scraper.on('fetched', function(url, window, $) {
+scraper.on('fetched', function(index, url, window, $) {
   console.log($('body').html());
 });
 
