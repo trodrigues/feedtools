@@ -11,8 +11,9 @@ app.router.get('/', function (data) {
 });
 
 app.router.post('/filter/repeatedkeywords', function () {
+  var response;
   try {
-    var response = JSON.parse(this.req.body.data);
+    response = JSON.parse(this.req.body.data);
   } catch(err){
     console.log("error parsing data");
     this.res.writeHead(502);
@@ -36,7 +37,7 @@ app.router.post('/filter/repeatedkeywords', function () {
   var indexesForRemoval = [];
   response.items.forEach(function(val, idx) {
     var extractedTerms = val['loop:termextraction'],
-        extractedTermsList = (!util.isArray(extractedTerms)) ? [extractedTerms] : extractedTerms;
+        extractedTermsList = (!util.isArray(extractedTerms)) ? [extractedTerms] : extractedTerms,
         hits = 0,
         hitTerms = [];
 
