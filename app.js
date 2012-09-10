@@ -56,7 +56,7 @@ app.router.post('/filter/repeatedkeywords', function () {
 
     hitTerms = _.uniq(hitTerms);
 
-    if(hits > 1){
+    if(hits >= 3){
       indexesForRemoval.push(idx);
       console.log('> Removing items with:');
       console.log('Title: '+val.title);
