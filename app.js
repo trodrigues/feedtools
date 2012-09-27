@@ -4,7 +4,10 @@ var flatiron = require('flatiron'),
     scrapersHandler = require('./scrapersHandler'),
     feedFetcher = require('./feedFetcher');
 
-feedFetcher.createFetcher(require('./feedlist.json'));
+var fetcher = feedFetcher.createFetcher(require('./feedlist.json'));
+fetcher.getStoredArticles(function(err, articles) {
+  console.log(articles.length);
+});
 
 app.use(flatiron.plugins.http);
 
