@@ -1,13 +1,34 @@
 var flatiron = require('flatiron'),
     app = flatiron.app,
+    redis = require('redis'),
     repeatedKeywordsHandler = require('./repeatedKeywordsHandler'),
     scrapersHandler = require('./scrapersHandler'),
     feedFetcher = require('./feedFetcher');
 
-var fetcher = feedFetcher.createFetcher(require('./feedlist.json'));
-fetcher.getStoredArticles(function(err, articles) {
-  console.log(articles.length);
-});
+var fetchers = [],
+    feedGroups = require('./feedlist.json'),
+    redisClient = redis.createClient();
+
+function readyHandler(index) {
+  fetchers[index].parseList();
+  //setInterval()
+}
+
+function fetcherErrorHandler(err) {
+  console.log('lol fail', err);
+}
+
+for(var feedName in feedGroups){
+  var index = fetchers.length;
+  fetchers.push(feedFetcher.createFetcher({
+    name: feedName,
+    list: feedGroups[feedName],
+    redisClient: redisClient,
+    index: index
+  }));
+  fetchers[fetchers.length-1].on('ready', readyHandler);
+  fetchers[fetchers.length-1].on('error', readyHandler);
+}
 
 app.use(flatiron.plugins.http);
 
