@@ -23,6 +23,7 @@ function readyHandler(index) {
   intervals[index] = setInterval(function() {
     fetchers[index].parseList();
   }, 3600000);
+  app.router.get('/rss/'+fetchers[index].name, fetchers[index].renderRSS.bind(fetchers[index]));
   attemptServerStart();
 }
 
