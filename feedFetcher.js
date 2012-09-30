@@ -19,19 +19,17 @@ function FeedFetcher(params) {
 util.inherits(FeedFetcher, EventEmitter2);
 
 FeedFetcher.prototype.incomingArticleHandler = function (article) {
-  var duplicate = false;
+  var duplicate = false,
+      self = this;
   for(var i=0; i<this.storedArticles.length; i++){
     if(this.storedArticles[i].title === article.title){
       duplicate = true;
-      console.log('duplicate found', article.title);
       break;
     }
   }
   if(!duplicate){
     this.redisClient.lpush(this.name, JSON.stringify(article), function(err, replies) {
-      console.log('>>>>> item');
-      console.log(err);
-      console.log(replies);
+      self.emit('insertionError', err);
     });
   }
 };
@@ -46,9 +44,9 @@ FeedFetcher.prototype.parseList = function () {
 FeedFetcher.prototype.getStoredArticles = function() {
   var self = this;
   this.redisClient.llen(this.name, function(err, len) {
-    if(err){ return self.emit('error', err); }
+    if(err){ return self.emit('storedArticleError', err); }
     self.redisClient.lrange(self.name, 0, len, function(err, replies) {
-      if(err){ return self.emit('error', err); }
+      if(err){ return self.emit('storedArticleError', err); }
       var parsedReplies = [];
       replies.forEach(function(reply) {
         parsedReplies.push(JSON.parse(reply));
