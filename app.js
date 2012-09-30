@@ -6,19 +6,24 @@ var flatiron = require('flatiron'),
     feedFetcher = require('./feedFetcher');
 
 var fetchers = [],
+    fetcherReadyCount = 0,
     intervals = {},
     feedGroups = require('./feedlist.json'),
     redisClient = redis.createClient();
+
+function attemptServerStart() {
+  fetcherReadyCount++;
+  if(fetcherReadyCount == fetchers.length){
+    app.start(3040);
+  }
+}
 
 function readyHandler(index) {
   fetchers[index].parseList();
   intervals[index] = setInterval(function() {
     fetchers[index].parseList();
   }, 3600000);
-}
-
-function fetcherErrorHandler(err) {
-  console.log('lol fail', err);
+  attemptServerStart();
 }
 
 for(var feedName in feedGroups){
@@ -30,8 +35,10 @@ for(var feedName in feedGroups){
     index: index
   }));
   fetchers[fetchers.length-1].on('ready', readyHandler);
-  fetchers[fetchers.length-1].on('error', readyHandler);
+  fetchers[fetchers.length-1].on('insertionError', function(err) {console.log(err);});
+  fetchers[fetchers.length-1].on('storedArticleError', function(err) {console.log(err); attemptServerStart();});
 }
+
 
 app.use(flatiron.plugins.http);
 
@@ -43,4 +50,3 @@ app.router.get('/', function (data) {
 app.router.post('/filter/repeatedkeywords', repeatedKeywordsHandler);
 app.router.post('/filter/scraper', scrapersHandler);
 
-app.start(3040);
