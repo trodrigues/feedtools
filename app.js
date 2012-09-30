@@ -6,12 +6,15 @@ var flatiron = require('flatiron'),
     feedFetcher = require('./feedFetcher');
 
 var fetchers = [],
+    intervals = {},
     feedGroups = require('./feedlist.json'),
     redisClient = redis.createClient();
 
 function readyHandler(index) {
   fetchers[index].parseList();
-  //setInterval()
+  intervals[index] = setInterval(function() {
+    fetchers[index].parseList();
+  }, 3600000);
 }
 
 function fetcherErrorHandler(err) {
