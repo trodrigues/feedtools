@@ -3,7 +3,8 @@ var flatiron = require('flatiron'),
     redis = require('redis'),
     repeatedKeywordsHandler = require('./repeatedKeywordsHandler'),
     scrapersHandler = require('./scrapersHandler'),
-    feedFetcher = require('./feedFetcher');
+    feedFetcher = require('./feedFetcher'),
+    feedRenderer = require('./feedRenderer');
 
 var fetchers = [],
     fetcherReadyCount = 0,
@@ -23,7 +24,8 @@ function readyHandler(index) {
   intervals[index] = setInterval(function() {
     fetchers[index].parseList();
   }, 3600000);
-  app.router.get('/rss/'+fetchers[index].name, fetchers[index].renderRSS.bind(fetchers[index]));
+  var feedRenderer = feedRenderer.createRenderer(fetchers[index]);
+  app.router.get('/rss/'+fetchers[index].name, feedRenderer.render.bind(feedRenderer));
   attemptServerStart();
 }
 
