@@ -13,49 +13,64 @@ function FeedFetcher(params) {
     console.log('Redis error:', err);
   });
 
+  // set handler for feed parser's articles
   this.parser.on('article', this.incomingArticleHandler.bind(this));
-  this.getStoredArticles();
+
+  // fetch previously stored articles
+  this.on('storedArticles', function(instanceId) {
+    this.emit('ready', instanceId);
+  }.bind(this));
+  this.fetchStoredArticles();
 }
 util.inherits(FeedFetcher, EventEmitter2);
 
-FeedFetcher.prototype.incomingArticleHandler = function (article) {
-  var duplicate = false,
-      self = this;
-  for(var i=0; i<this.storedArticles.length; i++){
-    if(this.storedArticles[i].title === article.title){
-      duplicate = true;
-      break;
+
+FeedFetcher.prototype.isDuplicate = function (article) {
+ for(var i=0; i<this.existingArticles.length; i++){
+    if(this.existingArticles[i].title === article.title){
+      return true;
     }
   }
-  if(!duplicate){
+  return false;
+};
+
+
+FeedFetcher.prototype.incomingArticleHandler = function (article) {
+   if(!this.isDuplicate(article)){
     this.redisClient.lpush(this.name, JSON.stringify(article), function(err, replies) {
-      self.emit('insertionError', err);
-    });
+      this.emit('insertionError', err);
+    }.bind(this));
   }
 };
 
-FeedFetcher.prototype.parseList = function () {
+
+FeedFetcher.prototype.fetchFromSource = function () {
   this.feedList.forEach(function(url) {
     console.log('parsing', url);
     this.parser.parseUrl(url);
   }, this);
 };
 
-FeedFetcher.prototype.getStoredArticles = function() {
-  var self = this;
+
+FeedFetcher.prototype.fetchStoredArticles = function() {
   this.redisClient.llen(this.name, function(err, len) {
-    if(err){ return self.emit('storedArticleError', err); }
-    self.redisClient.lrange(self.name, 0, len, function(err, replies) {
-      if(err){ return self.emit('storedArticleError', err); }
+    if(err){ return this.emit('storedArticleError', err); }
+
+    this.redisClient.lrange(this.name, 0, len, function(err, replies) {
+      if(err){ return this.emit('storedArticleError', err); }
+
       var parsedReplies = [];
       replies.forEach(function(reply) {
         parsedReplies.push(JSON.parse(reply));
       });
-      self.storedArticles = parsedReplies;
-      self.emit('ready', self.params.index);
-    });
-  });
+
+      this.existingArticles = parsedReplies;
+      this.emit('storedArticles', this.params.instanceId, parsedReplies);
+      
+    }.bind(this));
+  }.bind(this));
 };
+
 
 module.exports = {
   createFetcher: function(params) {

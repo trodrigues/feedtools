@@ -20,12 +20,13 @@ function attemptServerStart() {
 }
 
 function readyHandler(index) {
-  fetchers[index].parseList();
-  intervals[index] = setInterval(function() {
-    fetchers[index].parseList();
-  }, 3600000);
   var feedRenderer = feedRenderer.createRenderer(fetchers[index]);
   app.router.get('/rss/'+fetchers[index].name, feedRenderer.render.bind(feedRenderer));
+
+  fetchers[index].fetchFromSource();
+  intervals[index] = setInterval(function() {
+    fetchers[index].fetchFromSource();
+  }, 3600000);
   attemptServerStart();
 }
 
@@ -35,7 +36,7 @@ for(var feedName in feedGroups){
     name: feedName,
     list: feedGroups[feedName],
     redisClient: redisClient,
-    index: index
+    instanceId: index
   }));
   fetchers[fetchers.length-1].on('ready', readyHandler);
   fetchers[fetchers.length-1].on('insertionError', function(err) {console.log(err);});
