@@ -5,6 +5,7 @@ var flatiron = require('flatiron'),
     scrapersHandler = require('./scrapersHandler'),
     feedFetcher = require('./feedFetcher'),
     feedRenderer = require('./feedRenderer');
+    debugger;
 
 var fetchers = [],
     fetcherReadyCount = 0,
@@ -15,13 +16,17 @@ var fetchers = [],
 function attemptServerStart() {
   fetcherReadyCount++;
   if(fetcherReadyCount == fetchers.length){
+    console.log('starting server');
     app.start(3040);
   }
 }
 
 function readyHandler(index) {
-  var feedRenderer = feedRenderer.createRenderer(fetchers[index]);
-  app.router.get('/rss/'+fetchers[index].name, feedRenderer.render.bind(feedRenderer));
+  var renderer = feedRenderer.createRenderer({
+    fetcher: fetchers[index]
+  });
+  console.log('setting up route for', fetchers[index].name);
+  app.router.get('/rss/'+fetchers[index].name, renderer.render.bind(renderer));
 
   fetchers[index].fetchFromSource();
   intervals[index] = setInterval(function() {
@@ -39,8 +44,8 @@ for(var feedName in feedGroups){
     instanceId: index
   }));
   fetchers[fetchers.length-1].on('ready', readyHandler);
-  fetchers[fetchers.length-1].on('insertionError', function(err) {console.log(err);});
-  fetchers[fetchers.length-1].on('storedArticleError', function(err) {console.log(err); attemptServerStart();});
+  fetchers[fetchers.length-1].on('insertionError', function(err) {console.log('insertion error', err);});
+  fetchers[fetchers.length-1].on('storedArticleError', function(err) {console.log('stored article error', err); attemptServerStart();});
 }
 
 

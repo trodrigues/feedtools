@@ -38,7 +38,9 @@ FeedFetcher.prototype.isDuplicate = function (article) {
 FeedFetcher.prototype.incomingArticleHandler = function (article) {
    if(!this.isDuplicate(article)){
     this.redisClient.lpush(this.name, JSON.stringify(article), function(err, replies) {
-      this.emit('insertionError', err);
+      if(err !== null){
+        this.emit('insertionError', err, article);
+      }
     }.bind(this));
   }
 };
@@ -66,7 +68,7 @@ FeedFetcher.prototype.fetchStoredArticles = function() {
 
       this.existingArticles = parsedReplies;
       this.emit('storedArticles', this.params.instanceId, parsedReplies);
-      
+
     }.bind(this));
   }.bind(this));
 };
