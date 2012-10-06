@@ -12,6 +12,7 @@ util.inherits(FeedRenderer, EventEmitter2);
 FeedRenderer.prototype.render = function (params, postRender) {
   var self = this;
   this.params.fetcher.once('storedArticles', function(fetcherId, articles) {
+    //console.log(Object.keys(articles[0]));
     articles.forEach(function(value) {
       self.feed.item({
         title: value.title,
@@ -19,6 +20,7 @@ FeedRenderer.prototype.render = function (params, postRender) {
         url: value.link,
         guid: value.guid,
         author: value.author,
+        categories: value.categories,
         date: value.date
       });
     });
