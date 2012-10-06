@@ -5,39 +5,25 @@ var EventEmitter2 = require('eventemitter2').EventEmitter2,
 function FeedRenderer(params) {
   this.params = params;
 
-  /*
-  this.feed = new RSS({
-    // TODO get this data on the fetcher from the source url
-    title: 'title',
-    description: 'description',
-    feed_url: 'http://example.com/rss.xml',
-    site_url: 'http://example.com',
-    image_url: 'http://example.com/icon.png',
-    author: 'Dylan Greene'
-  });
-*/
+  this.feed = new RSS(params.fetcher.getFeedMetadata());
 }
 util.inherits(FeedRenderer, EventEmitter2);
 
-FeedRenderer.prototype.render = function () {
-  console.log('rendering');
+FeedRenderer.prototype.render = function (params, postRender) {
+  var self = this;
   this.params.fetcher.once('storedArticles', function(fetcherId, articles) {
     articles.forEach(function(value) {
-      console.log('renderer', value);
-      /*
-      this.feed.item({
-        title:  'item title',
-        description: 'use this for the content. It can include html.',
-        url: 'http://example.com/article4?this&that', // link to the item
-        guid: '1123', // optional - defaults to url
-        author: 'Guest Author', // optional - defaults to feed author property
-        date: 'May 27, 2012' // any format that js Date can parse.
+      self.feed.item({
+        title: value.title,
+        description: value.description,
+        url: value.link,
+        guid: value.guid,
+        author: value.author,
+        date: value.date
       });
-*/
-
-      // TODO send out http response with this.feed.xml()
-    }, this);
-  }.bind(this));
+    });
+    postRender(params.format == 'xml' ? self.feed.xml() : JSON.stringify(self.feed));
+  });
 
   this.params.fetcher.fetchStoredArticles();
 };

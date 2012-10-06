@@ -5,7 +5,6 @@ var flatiron = require('flatiron'),
     scrapersHandler = require('./scrapersHandler'),
     feedFetcher = require('./feedFetcher'),
     feedRenderer = require('./feedRenderer');
-    debugger;
 
 var fetchers = [],
     fetcherReadyCount = 0,
@@ -25,8 +24,25 @@ function readyHandler(index) {
   var renderer = feedRenderer.createRenderer({
     fetcher: fetchers[index]
   });
+
   console.log('setting up route for', fetchers[index].name);
-  app.router.get('/rss/'+fetchers[index].name, renderer.render.bind(renderer));
+  app.router.get('/rss/'+fetchers[index].name, function() {
+    var self = this,
+        format = 'xml',
+        headers = {'Content-Type': 'application/rss+xml'};
+
+    if(self.req.query.json == 'true'){
+      headers['Content-Type'] = 'application/json';
+      format = 'json';
+    }
+
+    renderer.render({
+      format: format
+    }, function(renderedFeed) {
+      self.res.writeHead(200, headers);
+      self.res.end(renderedFeed);
+    });
+  });
 
   fetchers[index].fetchFromSource();
   intervals[index] = setInterval(function() {
@@ -39,7 +55,7 @@ for(var feedName in feedGroups){
   var index = fetchers.length;
   fetchers.push(feedFetcher.createFetcher({
     name: feedName,
-    list: feedGroups[feedName],
+    data: feedGroups[feedName],
     redisClient: redisClient,
     instanceId: index
   }));

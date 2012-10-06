@@ -5,7 +5,7 @@ var EventEmitter2 = require('eventemitter2').EventEmitter2,
 function FeedFetcher(params) {
   this.params = params;
   this.name = params.name;
-  this.feedList = params.list;
+  this.feedList = params.data.feeds;
   this.parser = new FeedParser();
   this.redisClient = params.redisClient;
 
@@ -23,6 +23,10 @@ function FeedFetcher(params) {
   this.fetchStoredArticles();
 }
 util.inherits(FeedFetcher, EventEmitter2);
+
+FeedFetcher.prototype.getFeedMetadata = function () {
+  return this.params.data;
+};
 
 
 FeedFetcher.prototype.isDuplicate = function (article) {
