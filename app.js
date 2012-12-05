@@ -4,12 +4,11 @@ var flatiron = require('flatiron'),
     repeatedKeywordsHandler = require('./repeatedKeywordsHandler'),
     scrapersHandler = require('./scrapersHandler'),
     feedFetcher = require('./feedFetcher'),
-    feedRenderer = require('./feedRenderer');
-
-var fetchers = [],
+    feedRenderer = require('./feedRenderer'),
+    feedGroups = require('./feedlist.json'),
+    fetchers = [],
     fetcherReadyCount = 0,
     intervals = {},
-    feedGroups = require('./feedlist.json'),
     redisClient = redis.createClient();
 
 function attemptServerStart() {
@@ -20,13 +19,8 @@ function attemptServerStart() {
   }
 }
 
-function readyHandler(index) {
-  var renderer = feedRenderer.createRenderer({
-    fetcher: fetchers[index]
-  });
-
-  console.log('setting up route for', fetchers[index].name);
-  app.router.get('/rss/'+fetchers[index].name, function() {
+function makeFeedHandler(renderer) {
+  return function feedHandler() {
     var self = this,
         format = 'xml',
         headers = {'Content-Type': 'application/rss+xml'};
@@ -42,15 +36,29 @@ function readyHandler(index) {
       self.res.writeHead(200, headers);
       self.res.end(renderedFeed);
     });
+  }
+}
+
+
+function readyHandler(index) {
+  var renderer = feedRenderer.createRenderer({
+    fetcher: fetchers[index]
   });
 
+  console.log('setting up route for', fetchers[index].name);
+  app.router.get('/rss/'+fetchers[index].name, makeFeedHandler(renderer));
+
+  // update and start fetcher
   fetchers[index].fetchFromSource();
   intervals[index] = setInterval(function() {
     fetchers[index].fetchFromSource();
   }, 3600000);
+
   attemptServerStart();
 }
 
+
+// create fetchers
 for(var feedName in feedGroups){
   var index = fetchers.length;
   fetchers.push(feedFetcher.createFetcher({
