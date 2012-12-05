@@ -1,8 +1,8 @@
 var flatiron = require('flatiron'),
     app = flatiron.app,
     redis = require('redis'),
-    repeatedKeywordsHandler = require('./repeatedKeywordsHandler'),
-    scrapersHandler = require('./scrapersHandler'),
+    repeatedKeywordsController = require('./controllers/repeatedKeywords'),
+    scrapersController = require('./controllers/scrapers'),
     feedFetcher = require('./feedFetcher'),
     feedRenderer = require('./feedRenderer'),
     feedGroups = require('./feedlist.json'),
@@ -80,6 +80,6 @@ app.router.get('/', function (data) {
   this.res.end('Hello. I have nothing for you. Goodbye.');
 });
 
-app.router.post('/filter/repeatedkeywords', repeatedKeywordsHandler);
-app.router.post('/filter/scraper', scrapersHandler);
+app.router.post('/filter/repeatedkeywords', repeatedKeywordsController);
+app.router.post('/filter/scraper', scrapersController);
 
