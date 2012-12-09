@@ -15,7 +15,7 @@ app.router.post('/filter/repeatedkeywords', repeatedKeywordsController);
 app.router.post('/filter/scraper', scrapersController);
 
 feeds.createFetchers({
-  feedGroups: require('./feedlist.json'),
+  feedGroups: require('./feedlist2.json'),
   createRoute: function(routePath, requestHandler) {
     app.router.get(routePath, requestHandler);
   },

@@ -64,8 +64,8 @@ FeedFetcher.prototype.incomingArticlesHandler = function(nextFeed, meta, article
 
 FeedFetcher.prototype.pushArticle = function(article, nextArticle) {
   var fetcher = this;
-  console.log(article.date);
   if(!fetcher.isDuplicate(article) && !fetcher.isStale(article.date)){
+    fetcher.existingArticles.push(article);
     fetcher.redisClient.lpush(fetcher.name, JSON.stringify(article), function(err, replies) {
       nextArticle();
       if(err !== null){
@@ -86,8 +86,8 @@ FeedFetcher.prototype.isStale = function(rawDate) {
 };
 
 
-FeedFetcher.prototype.isDuplicate = function (article) {
- for(var i=0; i<this.existingArticles.length; i++){
+FeedFetcher.prototype.isDuplicate = function(article) {
+  for(var i=0; i<this.existingArticles.length; i++){
     if(this.existingArticles[i].title === article.title){
       return true;
     }
