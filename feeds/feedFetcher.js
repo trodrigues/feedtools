@@ -1,31 +1,88 @@
 var EventEmitter2 = require('eventemitter2').EventEmitter2,
     util = require('util'),
-    FeedParser = require('FeedParser');
+    async = require('async'),
+    feedparser = require('FeedParser');
 
 function FeedFetcher(params) {
   this.params = params;
   this.name = params.name;
   this.feedList = params.data.feeds;
-  this.parser = new FeedParser();
   this.redisClient = params.redisClient;
+
+  this.expires = this.getExpiryDate();
 
   this.redisClient.on('error', function(err) {
     console.log('Redis error:', err);
   });
 
-  // set handler for feed parser's articles
-  this.parser.on('article', this.incomingArticleHandler.bind(this));
-
-  // fetch previously stored articles
-  this.on('storedArticles', function(instanceId) {
+  // emit ready event the first time stored articles are fetched
+  this.once('storedArticles', function(instanceId) {
     this.emit('ready', instanceId);
   }.bind(this));
+
+  this.on('storedArticles', this.cleanupOldArticles.bind(this));
+
   this.fetchStoredArticles();
 }
 util.inherits(FeedFetcher, EventEmitter2);
 
-FeedFetcher.prototype.getFeedMetadata = function () {
-  return this.params.data;
+
+FeedFetcher.prototype.getExpiryDate = function () {
+  if(this.params.expires){
+    var hours = this.params.expires.match(/(\d)h/);
+    if(hours !== null){
+      return parseInt(hours[1], 10) * 3600 * 1000;
+    }
+
+    var days = this.params.expires.match(/(\d)d/);
+    if(days !== null){
+      return (parseInt(days[1], 10) * 24) * 3600 * 1000;
+    }
+  }
+  // default to 5 hours
+  return 5 * 3600 * 1000;
+};
+
+
+FeedFetcher.prototype.fetchFromSource = function () {
+  var fetcher = this;
+  async.forEachSeries(fetcher.feedList, function(url, next) {
+    console.log('parsing', url);
+    feedparser.parseUrl(url).on('complete', fetcher.incomingArticlesHandler.bind(fetcher, next));
+  });
+};
+
+
+FeedFetcher.prototype.incomingArticlesHandler = function(nextFeed, meta, articles) {
+  articles.sort(function(article1, article2) {
+    return Date.parse(article1.date) - Date.parse(article2.date);
+  });
+
+  async.forEachSeries(articles, this.pushArticle.bind(this), nextFeed);
+};
+
+
+FeedFetcher.prototype.pushArticle = function(article, nextArticle) {
+  var fetcher = this;
+  console.log(article.date);
+  if(!fetcher.isDuplicate(article) && !fetcher.isStale(article.date)){
+    fetcher.redisClient.lpush(fetcher.name, JSON.stringify(article), function(err, replies) {
+      nextArticle();
+      if(err !== null){
+        fetcher.emit('insertionError', err, article);
+      }
+    });
+  } else {
+    nextArticle();
+  }
+};
+
+
+FeedFetcher.prototype.isStale = function(rawDate) {
+  var date = Date.parse(rawDate),
+      now = new Date(),
+      offset = new Date(now.getTime() - this.expires);
+  return date < offset;
 };
 
 
@@ -39,42 +96,44 @@ FeedFetcher.prototype.isDuplicate = function (article) {
 };
 
 
-FeedFetcher.prototype.incomingArticleHandler = function (article) {
-   if(!this.isDuplicate(article)){
-    this.redisClient.lpush(this.name, JSON.stringify(article), function(err, replies) {
-      if(err !== null){
-        this.emit('insertionError', err, article);
-      }
-    }.bind(this));
-  }
-};
-
-
-FeedFetcher.prototype.fetchFromSource = function () {
-  this.feedList.forEach(function(url) {
-    console.log('parsing', url);
-    this.parser.parseUrl(url);
-  }, this);
-};
-
-
 FeedFetcher.prototype.fetchStoredArticles = function() {
-  this.redisClient.llen(this.name, function(err, len) {
-    if(err){ return this.emit('storedArticleError', err); }
+  var fetcher = this;
+  fetcher.redisClient.llen(fetcher.name, function(err, len) {
+    if(err){ return fetcher.emit('storedArticleError', err); }
 
-    this.redisClient.lrange(this.name, 0, len, function(err, replies) {
-      if(err){ return this.emit('storedArticleError', err); }
+    fetcher.redisClient.lrange(fetcher.name, 0, len, function(err, replies) {
+      if(err){ return fetcher.emit('storedArticleError', err); }
 
       var parsedReplies = [];
       replies.forEach(function(reply) {
         parsedReplies.push(JSON.parse(reply));
       });
 
-      this.existingArticles = parsedReplies;
-      this.emit('storedArticles', this.params.instanceId, parsedReplies);
+      fetcher.existingArticles = parsedReplies;
+      fetcher.emit('storedArticles', fetcher.params.instanceId, parsedReplies);
+    });
+  });
+};
 
-    }.bind(this));
-  }.bind(this));
+
+FeedFetcher.prototype.cleanupOldArticles = function(instanceId, articles) {
+  var fetcher = this;
+  async.forEachSeries(articles, function(article, nextArticle) {
+    if(fetcher.isStale(article.date)){
+      fetcher.redisClient.rpop(fetcher.name, function(err, removed) {
+        nextArticle();
+      });
+    } else {
+      nextArticle();
+    }
+  }, function() {
+    fetcher.emit('cleanupFinished');
+  });
+};
+
+
+FeedFetcher.prototype.getFeedMetadata = function () {
+  return this.params.data;
 };
 
 
