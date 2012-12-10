@@ -1,0 +1,20 @@
+{
+  "guardian": {
+    "title": "Guardian",
+    "description": "Guardian",
+    "feed_url": "http://feeds.myserver.net/rss/guardian",
+    "site_url": "http://guardian.co.uk",
+    "image": "http://image.guardian.co.uk/sitecrumbs/Guardian.gif",
+    "author": "",
+    "feeds": [
+      "http://feeds.guardian.co.uk/theguardian/technology/rss",
+      "http://feeds.guardian.co.uk/theguardian/science/rss",
+      "http://feeds.guardian.co.uk/theguardian/media/rss",
+      "http://www.guardian.co.uk/global-development/rss",
+      "http://feeds.guardian.co.uk/theguardian/commentisfree/uk-edition/rss",
+      "http://feeds.guardian.co.uk/theguardian/rss",
+      "http://www.guardian.co.uk/world/rss",
+      "http://www.guardian.co.uk/world/usa/rss"
+    ]
+  }
+}
