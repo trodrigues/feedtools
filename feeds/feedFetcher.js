@@ -1,7 +1,7 @@
 var EventEmitter2 = require('eventemitter2').EventEmitter2,
     util = require('util'),
     async = require('async'),
-    feedparser = require('FeedParser');
+    feedparser = require('feedparser');
 
 function FeedFetcher(params) {
   this.params = params;
