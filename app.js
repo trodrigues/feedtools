@@ -5,7 +5,7 @@ var flatiron = require('flatiron'),
     feeds = require('./feeds');
 
 app.use(flatiron.plugins.http);
-app.config.use('file', {file: __dirname__+'/config/config.json'});
+app.config.use('file', {file: __dirname+'/config/config.json'});
 
 app.router.get('/', function (data) {
   this.res.writeHead(200, { 'Content-Type': 'text/plain' });
