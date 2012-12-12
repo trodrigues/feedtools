@@ -1,82 +1,86 @@
 var redis = require('redis'),
     feedFetcher = require('./feedFetcher'),
-    feedRenderer = require('./feedRenderer'),
-    feedParams,
-    fetchers = [],
-    fetcherReadyCount = 0,
-    intervals = {},
-    redisClient = redis.createClient();
+    feedRenderer = require('./feedRenderer');
 
-function createFetchers(params){
-  feedParams = params;
+function Fetchers(params){
+  var fetchers = this;
+  this.redisClient = redis.createClient();
+  this.feedParams = params;
+  this.fetchers = [];
+  this.fetcherReadyCount = 0;
+  this.intervals = {};
 
   for(var feedName in params.feedGroups){
-    var index = fetchers.length;
-    fetchers.push(feedFetcher.createFetcher({
+    var index = this.fetchers.length;
+    this.fetchers.push(feedFetcher.createFetcher({
       name: feedName,
       data: params.feedGroups[feedName],
-      redisClient: redisClient,
+      redisClient: this.redisClient,
       instanceId: index
     }));
-    fetchers[fetchers.length-1].on('ready', readyHandler);
-    fetchers[fetchers.length-1].on('insertionError', function(err) {
+    this.fetchers[this.fetchers.length-1].on('ready', this.readyHandler.bind(this));
+    this.fetchers[this.fetchers.length-1].on('insertionError', function(err) {
       console.log('insertion error', err);
     });
-    fetchers[fetchers.length-1].on('storedArticleError', function(err) {
+    this.fetchers[this.fetchers.length-1].on('storedArticleError', function(err) {
       console.log('stored article error', err);
-      terminateFetching();
+      fetchers.terminateFetching();
     });
   }
 }
 
 
-function readyHandler(index) {
-  var renderer = feedRenderer.createRenderer({
-    fetcher: fetchers[index]
+Fetchers.prototype.readyHandler = function readyHandler(index) {
+  var fetchers = this;
+  this.renderer = feedRenderer.createRenderer({
+    fetcher: this.fetchers[index]
   });
 
-  console.log('setting up route for', fetchers[index].name);
-  feedParams.createRoute('/rss/'+fetchers[index].name, makeFeedHandler(renderer));
+  console.log('setting up route for', this.fetchers[index].name);
+  this.feedParams.createRoute('/rss/'+this.fetchers[index].name, this.makeFeedHandler());
 
   // update and start fetcher
-  fetchers[index].fetchFromSource();
-  intervals[index] = setInterval(function() {
-    fetchers[index].fetchFromSource();
+  this.fetchers[index].fetchFromSource();
+  this.intervals[index] = setInterval(function() {
+    fetchers.fetchers[index].fetchFromSource();
   }, 3600000);
 
-  terminateFetching();
-}
+  this.terminateFetching();
+};
 
 
-function makeFeedHandler(renderer) {
+Fetchers.prototype.makeFeedHandler = function makeFeedHandler() {
+  var fetchers = this;
   return function feedHandler() {
-    var self = this,
+    var handler = this,
         format = 'xml',
         headers = {'Content-Type': 'application/rss+xml'};
 
-    if(self.req.query.json == 'true'){
+    if(handler.req.query.json == 'true'){
       headers['Content-Type'] = 'application/json';
       format = 'json';
     }
 
-    renderer.render({
+    fetchers.renderer.render({
       format: format
     }, function(renderedFeed) {
-      self.res.writeHead(200, headers);
-      self.res.end(renderedFeed);
+      handler.res.writeHead(200, headers);
+      handler.res.end(renderedFeed);
     });
   }
-}
+};
 
 
-function terminateFetching() {
-  fetcherReadyCount++;
-  if(fetcherReadyCount === fetchers.length){
-    feedParams.terminateFetching();
+Fetchers.prototype.terminateFetching = function terminateFetching() {
+  this.fetcherReadyCount++;
+  if(this.fetcherReadyCount === this.fetchers.length){
+    this.feedParams.terminateFetching();
   }
-}
+};
 
 
 module.exports = {
-  createFetchers: createFetchers
+  createFetchers: function(params){
+    return new Fetchers(params);
+  }
 };
