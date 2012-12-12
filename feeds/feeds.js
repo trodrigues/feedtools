@@ -4,6 +4,7 @@ var redis = require('redis'),
 
 function Fetchers(params){
   var fetchers = this;
+  this.logger = params.logger;
   this.redisClient = redis.createClient();
   this.feedParams = params;
   this.fetchers = [];
@@ -14,16 +15,17 @@ function Fetchers(params){
     var index = this.fetchers.length;
     this.fetchers.push(feedFetcher.createFetcher({
       name: feedName,
+      logger: this.logger,
       data: params.feedGroups[feedName],
       redisClient: this.redisClient,
       instanceId: index
     }));
     this.fetchers[this.fetchers.length-1].on('ready', this.readyHandler.bind(this));
     this.fetchers[this.fetchers.length-1].on('insertionError', function(err) {
-      console.log('insertion error', err);
+      fetchers.logger.error('insertion error', {error: err});
     });
     this.fetchers[this.fetchers.length-1].on('storedArticleError', function(err) {
-      console.log('stored article error', err);
+      fetchers.logger.error('stored article error', {error: err});
       fetchers.terminateFetching();
     });
   }
@@ -33,10 +35,11 @@ function Fetchers(params){
 Fetchers.prototype.readyHandler = function readyHandler(index) {
   var fetchers = this;
   this.renderer = feedRenderer.createRenderer({
-    fetcher: this.fetchers[index]
+    fetcher: this.fetchers[index],
+    logger: this.logger
   });
 
-  console.log('setting up route for', this.fetchers[index].name);
+  this.logger.info('setting up route', {name: this.fetchers[index].name});
   this.feedParams.createRoute('/rss/'+this.fetchers[index].name, this.makeFeedHandler());
 
   // update and start fetcher

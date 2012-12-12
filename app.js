@@ -1,5 +1,6 @@
 var flatiron = require('flatiron'),
-    logger = require('winston'),
+    winston = require('winston'),
+    logger,
     app = flatiron.app,
     repeatedKeywordsController = require('./controllers/repeatedKeywords'),
     scrapersController = require('./controllers/scrapers'),
@@ -9,14 +10,25 @@ var flatiron = require('flatiron'),
 app.use(flatiron.plugins.http);
 app.config.use('file', {file: __dirname+'/config/config.json'});
 
+var transports = [];
 if(app.config.get('env') == 'prod'){
-  logger.add(logger.transports.File, {
+  transports.push(new winston.transports.File({
     level: app.config.get('logLevel'),
-    filename: 'logs/app.log'
-  });
+    filename: 'logs/app.log',
+    timestamp: true,
+    json: true,
+    maxsize: 500 * 1024
+  }));
 } else {
-  logger.remove(logger.transports.Console);
+  transports.push(new winston.transports.Console({
+    level: app.config.get('logLevel'),
+    colorize: true
+  }));
 }
+
+var logger = new winston.Logger({
+  transports: transports
+});
 
 app.router.get('/', function (data) {
   this.res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -27,6 +39,7 @@ app.router.post('/filter/repeatedkeywords', repeatedKeywordsController);
 app.router.post('/filter/scraper', scrapersController);
 
 feeds.createFetchers({
+  logger: logger,
   feedGroups: require(app.config.get('feedlist')),
   createRoute: function(routePath, requestHandler) {
     app.router.get(routePath, requestHandler);

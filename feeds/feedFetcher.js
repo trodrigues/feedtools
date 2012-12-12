@@ -4,7 +4,9 @@ var EventEmitter2 = require('eventemitter2').EventEmitter2,
     feedparser = require('feedparser');
 
 function FeedFetcher(params) {
+  var fetcher = this;
   this.params = params;
+  this.logger = params.logger;
   this.name = params.name;
   this.feedList = params.data.feeds;
   this.redisClient = params.redisClient;
@@ -12,13 +14,13 @@ function FeedFetcher(params) {
   this.expires = this.getExpiryDate();
 
   this.redisClient.on('error', function(err) {
-    console.log('Redis error:', err);
+    fetcher.logger.error('Redis error', {error: err});
   });
 
   // emit ready event the first time stored articles are fetched
   this.once('storedArticles', function(instanceId) {
-    this.emit('ready', instanceId);
-  }.bind(this));
+    fetcher.emit('ready', instanceId);
+  });
 
   this.on('storedArticles', this.cleanupOldArticles.bind(this));
 
@@ -47,7 +49,7 @@ FeedFetcher.prototype.getExpiryDate = function () {
 FeedFetcher.prototype.fetchFromSource = function () {
   var fetcher = this;
   async.forEachSeries(fetcher.feedList, function(url, next) {
-    console.log('parsing', url);
+    fetcher.logger.warn('parsing', {url: url});
     feedparser.parseUrl(url).on('complete', fetcher.incomingArticlesHandler.bind(fetcher, next));
   });
 };

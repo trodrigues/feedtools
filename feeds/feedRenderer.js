@@ -4,6 +4,7 @@ var EventEmitter2 = require('eventemitter2').EventEmitter2,
 
 function FeedRenderer(params) {
   this.params = params;
+  this.logger = params.logger;
 
   this.feed = new RSS(params.fetcher.getFeedMetadata());
 }
