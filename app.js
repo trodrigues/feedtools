@@ -6,7 +6,6 @@ var flatiron = require('flatiron'),
     scrapersController = require('./controllers/scrapers'),
     feeds = require('./feeds');
 
-
 app.use(flatiron.plugins.http);
 app.config.env().use('file', {file: __dirname+'/config/config.json'});
 
