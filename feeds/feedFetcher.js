@@ -53,18 +53,27 @@ FeedFetcher.prototype.fetchFromSource = function () {
   var fetcher = this;
   this.logger.warn('Fetching', {name: this.params.name});
   async.forEachSeries(fetcher.feedList, function(url, next) {
-    fetcher.logger.warn('parsing', {url: url});
+    fetcher.logger.warn('Parsing', {url: url});
     feedparser.parseUrl(url).on('complete', fetcher.incomingArticlesHandler.bind(fetcher, next));
   });
 };
 
 
 FeedFetcher.prototype.incomingArticlesHandler = function(nextFeed, meta, articles) {
+  var fetcher = this;
   articles.sort(function(article1, article2) {
     return Date.parse(article1.date) - Date.parse(article2.date);
   });
+  this.newArticlesCount = 0;
 
-  async.forEachSeries(articles, this.pushArticle.bind(this), nextFeed);
+  async.forEachSeries(articles, this.pushArticle.bind(this), function() {
+    fetcher.logger.warn('New articles added', {
+      title: meta.title,
+      url: meta.link,
+      newArticles: fetcher.newArticlesCount
+    })
+    nextFeed();
+  });
 };
 
 
@@ -75,6 +84,7 @@ FeedFetcher.prototype.pushArticle = function(article, nextArticle) {
       title: article.title,
       articleDate: ''+article.date
     });
+    fetcher.newArticlesCount++;
     fetcher.existingArticles.push(article);
     fetcher.redisClient.lpush(fetcher.name, JSON.stringify(article), function(err, replies) {
       nextArticle();
