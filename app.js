@@ -8,10 +8,10 @@ var flatiron = require('flatiron'),
 
 
 app.use(flatiron.plugins.http);
-app.config.use('file', {file: __dirname+'/config/config.json'});
+app.config.env().use('file', {file: __dirname+'/config/config.json'});
 
 var transports = [];
-if(app.config.get('env') == 'prod'){
+if(app.config.get('NODE_ENV') == 'production'){
   transports.push(new winston.transports.File({
     level: app.config.get('logLevel'),
     filename: 'logs/app.log',
