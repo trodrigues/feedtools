@@ -10,6 +10,9 @@ function FeedFetcher(params) {
   this.name = params.name;
   this.feedList = params.data.feeds;
   this.redisClient = params.redisClient;
+  this.existingArticles = null;
+
+  this.logger.warn('Creating a fetcher for '+this.params.name);
 
   this.expires = this.getExpiryDate();
 
@@ -48,6 +51,7 @@ FeedFetcher.prototype.getExpiryDate = function () {
 
 FeedFetcher.prototype.fetchFromSource = function () {
   var fetcher = this;
+  this.logger.warn('Fetching', {name: this.params.name});
   async.forEachSeries(fetcher.feedList, function(url, next) {
     fetcher.logger.warn('parsing', {url: url});
     feedparser.parseUrl(url).on('complete', fetcher.incomingArticlesHandler.bind(fetcher, next));
@@ -67,6 +71,10 @@ FeedFetcher.prototype.incomingArticlesHandler = function(nextFeed, meta, article
 FeedFetcher.prototype.pushArticle = function(article, nextArticle) {
   var fetcher = this;
   if(!fetcher.isDuplicate(article) && !fetcher.isStale(article.date)){
+    this.logger.info('Adding article', {
+      title: article.title,
+      articleDate: ''+article.date
+    });
     fetcher.existingArticles.push(article);
     fetcher.redisClient.lpush(fetcher.name, JSON.stringify(article), function(err, replies) {
       nextArticle();
@@ -98,6 +106,15 @@ FeedFetcher.prototype.isDuplicate = function(article) {
 };
 
 
+FeedFetcher.prototype.fetchArticles = function() {
+  if(this.existingArticles && this.existingArticles.length > 0){
+    this.emit('storedArticles', this.params.instanceId, this.existingArticles);
+  } else {
+    this.fetchStoredArticles();
+  }
+};
+
+
 FeedFetcher.prototype.fetchStoredArticles = function() {
   var fetcher = this;
   fetcher.redisClient.llen(fetcher.name, function(err, len) {
@@ -111,7 +128,9 @@ FeedFetcher.prototype.fetchStoredArticles = function() {
         parsedReplies.push(JSON.parse(reply));
       });
 
-      fetcher.existingArticles = parsedReplies;
+      if(fetcher.existingArticles === null){
+        fetcher.existingArticles = parsedReplies;
+      }
       fetcher.emit('storedArticles', fetcher.params.instanceId, parsedReplies);
     });
   });
