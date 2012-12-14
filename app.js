@@ -14,7 +14,7 @@ var transports = [];
 if(app.config.get('NODE_ENV') == 'production'){
   transports.push(new winston.transports.File({
     level: app.config.get('logLevel'),
-    filename: 'logs/app.log',
+    filename: __dirname+'/logs/app.log',
     timestamp: true,
     json: true,
     maxsize: 500 * 1024
