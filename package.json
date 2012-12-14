@@ -14,7 +14,8 @@
     "redis": "~0.8.1",
     "rss": "~0.0.4",
     "union": "~0.3.4",
-    "winston": "~0.6.2"
+    "winston": "~0.6.2",
+    "moment": "~1.7.2"
   },
   "devDependencies": {},
   "scripts": {

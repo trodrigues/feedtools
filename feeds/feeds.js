@@ -1,4 +1,5 @@
 var redis = require('redis'),
+    moment = require('moment'),
     feedFetcher = require('./feedFetcher'),
     feedRenderer = require('./feedRenderer');
 
@@ -58,6 +59,7 @@ Feeds.prototype.makeFeedHandler = function makeFeedHandler(index) {
   var feeds = this;
   return function feedHandler() {
     var handler = this,
+        timeFormat = 'ddd, DD MMM YYYY HH:mm:ss [GMT]';
         format = 'xml',
         headers = {'Content-Type': 'application/rss+xml'};
 
@@ -66,9 +68,15 @@ Feeds.prototype.makeFeedHandler = function makeFeedHandler(index) {
       format = 'json';
     }
 
+    var now = moment();
+    headers['Last-Modified'] = now.format(timeFormat);
+    headers.Expires = now.add('m', 30).format(timeFormat);
+    headers['Cache-Control'] = 'max-age=1800, must-revalidate';
+
     feeds.renderers[index].render({
       format: format
     }, function(renderedFeed) {
+      headers['Content-Length'] = renderedFeed.length;
       handler.res.writeHead(200, headers);
       handler.res.end(renderedFeed);
     });
