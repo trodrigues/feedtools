@@ -71,7 +71,7 @@ Feeds.prototype.makeFeedHandler = function makeFeedHandler(index) {
     var now = moment();
     headers['Last-Modified'] = now.format(timeFormat);
     headers.Expires = now.add('m', 30).format(timeFormat);
-    headers['Cache-Control'] = 'max-age=1800, must-revalidate';
+    headers['Cache-Control'] = 'max-age=600, must-revalidate';
 
     feeds.renderers[index].render({
       format: format
