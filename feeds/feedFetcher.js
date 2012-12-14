@@ -108,7 +108,9 @@ FeedFetcher.prototype.isStale = function(rawDate) {
 
 FeedFetcher.prototype.isDuplicate = function(article) {
   for(var i=0; i<this.existingArticles.length; i++){
-    if(this.existingArticles[i].title === article.title){
+    if(this.existingArticles[i].title === article.title ||
+       this.existingArticles[i].guid === article.guid
+      ){
       return true;
     }
   }
