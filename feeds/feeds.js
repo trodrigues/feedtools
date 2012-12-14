@@ -76,7 +76,7 @@ Feeds.prototype.makeFeedHandler = function makeFeedHandler(index) {
     feeds.renderers[index].render({
       format: format
     }, function(renderedFeed) {
-      headers['Content-Length'] = renderedFeed.length;
+      headers['Content-Length'] = Buffer.byteLength(renderedFeed);
       handler.res.writeHead(200, headers);
       handler.res.end(renderedFeed);
     });
