@@ -6,7 +6,7 @@ var redis = require('redis'),
 
 function Feeds(params){
   var feeds = this;
-  var index;
+  var index, lastFetcher;
   this.logger = params.logger;
   this.redisClient = redis.createClient();
   this.params = params;
@@ -24,11 +24,12 @@ function Feeds(params){
       redisClient: this.redisClient,
       instanceId: index
     }));
-    this.fetchers[this.fetchers.length-1].on('ready', this.readyHandler.bind(this));
-    this.fetchers[this.fetchers.length-1].on('insertionError', function(err) {
+    lastFetcher = this.fetchers.length-1;
+    this.fetchers[lastFetcher].on('ready', this.readyHandler.bind(this));
+    this.fetchers[lastFetcher].on('insertionError', function(err) {
       feeds.logger.error('insertion error', {error: err});
     });
-    this.fetchers[this.fetchers.length-1].on('storedArticleError', function(err) {
+    this.fetchers[lastFetcher].on('storedArticleError', function(err) {
       feeds.logger.error('stored article error', {error: err});
       feeds.terminateFetching();
     });
