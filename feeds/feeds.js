@@ -1,5 +1,6 @@
 var redis = require('redis'),
     moment = require('moment'),
+    util = require('util'),
     feedFetcher = require('./feedFetcher'),
     feedRenderer = require('./feedRenderer');
 
@@ -77,6 +78,10 @@ Feeds.prototype.makeFeedHandler = function makeFeedHandler(index) {
       format: format
     }, function(renderedFeed) {
       headers['Content-Length'] = Buffer.byteLength(renderedFeed);
+      feeds.logger.warn('Serving feed', {
+        url: handler.req.url,
+        headers: util.inspect(handler.req.headers)
+      })
       handler.res.writeHead(200, headers);
       handler.res.end(renderedFeed);
     });
