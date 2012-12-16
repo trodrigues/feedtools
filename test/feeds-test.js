@@ -31,7 +31,8 @@ var feedGroups = {
 var feeds;
 
 var loggerStub = {
-  info: function() {}
+  info: function() {},
+  warn: function() {}
 };
 
 buster.testCase("Feeds module", {
@@ -126,6 +127,44 @@ buster.testCase("Feeds module", {
       assert.called(this.fetchStub);
       assert.called(this.terminateStub);
     }
+  },
+
+  "request handler usage": {
+    setUp: function() {
+      this.renderStub = sinon.stub();
+      this.renderStub.callsArgWith(1, 'renderedfeed');
+      this.writeHeadStub = sinon.stub();
+      this.endStub = sinon.stub();
+
+      this.feeds = feeds.createFeeds({logger: loggerStub});
+      this.feeds.renderers = [
+        {render: this.renderStub}
+      ];
+
+      this.handlerContext = {
+        req: {
+          query: {}
+        },
+        res: {
+          writeHead: this.writeHeadStub,
+          end: this.endStub
+        }
+      };
+      this.feedHandler = this.feeds.makeFeedHandler(0);
+      this.feedHandler.call(this.handlerContext);
+    },
+
+    "feed handler is returned": function() {
+      assert.isFunction(this.feedHandler);
+    },
+
+    "write head is called": function() {
+      assert.called(this.writeHeadStub);
+    },
+
+    "end is called with content": function() {
+      assert.calledWith(this.endStub, "renderedfeed");
+    },
   },
 
   tearDown: function() {
