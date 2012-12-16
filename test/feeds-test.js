@@ -30,10 +30,16 @@ var feedGroups = {
 
 var feeds;
 
+var loggerStub = {
+  info: function() {}
+};
+
 buster.testCase("Feeds module", {
   setUp: function() {
     var feedFetcher = require('../feeds/feedFetcher');
+    var feedRenderer = require('../feeds/feedRenderer');
     this.createFetcherStub = sinon.stub(feedFetcher, 'createFetcher');
+    this.createRendererStub = sinon.stub(feedRenderer, 'createRenderer');
 
     feeds = require('../feeds/feeds');
   },
@@ -85,7 +91,45 @@ buster.testCase("Feeds module", {
     }
   },
 
+  "request handler creation": {
+    setUp: function() {
+      this.createRendererStub.returns({});
+      this.fetchStub = sinon.stub();
+      this.createRouteStub = sinon.stub();
+
+      this.feeds = feeds.createFeeds({
+        createRoute: this.createRouteStub,
+        fetchInterval: 0,
+        logger: loggerStub
+      });
+      this.feeds.fetchers = [
+        {name: 'guardiansports', fetchFromSource: this.fetchStub},
+        {name: 'guardiantech', fetchFromSource: this.fetchStub}
+      ];
+      this.feedHandlerStub = sinon.stub(this.feeds, 'makeFeedHandler');
+      this.feedHandlerStub.returns({});
+      this.terminateStub = sinon.stub(this.feeds, 'terminateFetching');
+      this.feeds.readyHandler(0);
+    },
+
+    "renderers are created": function() {
+      this.feeds.readyHandler(1);
+      assert.equals(this.feeds.renderers.length, 2);
+    },
+
+    "routes are created": function() {
+      assert.calledWith(this.createRouteStub, '/rss/guardiansports', {});
+      assert.calledWith(this.feedHandlerStub, 0);
+    },
+
+    "data is fetched and fetching is terminated": function() {
+      assert.called(this.fetchStub);
+      assert.called(this.terminateStub);
+    }
+  },
+
   tearDown: function() {
     this.createFetcherStub.restore();
+    this.createRendererStub.restore();
   }
 })
