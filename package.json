@@ -15,7 +15,8 @@
     "rss": "~0.0.4",
     "union": "~0.3.4",
     "winston": "~0.6.2",
-    "moment": "~1.7.2"
+    "moment": "~1.7.2",
+    "sinon": "~1.5.2"
   },
   "devDependencies": {
     "buster": "~0.6.3"
