@@ -17,9 +17,11 @@
     "winston": "~0.6.2",
     "moment": "~1.7.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "buster": "~0.6.3"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./node_modules/buster/bin/buster-test"
   },
   "repository": {
     "type": "git",
