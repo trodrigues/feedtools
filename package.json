@@ -1,6 +1,6 @@
 {
   "name": "feedtools",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A server which does various things with RSS feeds and publishes them back to the world.",
   "main": "app.js",
   "dependencies": {
