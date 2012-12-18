@@ -2,5 +2,6 @@
   "env": "dev",
   "port": 3040,
   "logLevel": "info",
-  "feedlist": "./config/feedlist.json"
+  "feedlist": "./config/feedlist.json",
+  "fetchInterval": 1800
 }

@@ -39,7 +39,7 @@ app.router.post('/filter/scraper', scrapersController);
 
 feeds.createFeeds({
   logger: logger,
-  fetchInterval: 1800,
+  fetchInterval: app.config.get('fetchInterval'),
   feedGroups: require(app.config.get('feedlist')),
   createRoute: function(routePath, requestHandler) {
     app.router.get(routePath, requestHandler);
