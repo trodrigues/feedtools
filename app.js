@@ -7,7 +7,9 @@ var flatiron = require('flatiron'),
     feeds = require('./feeds');
 
 app.use(flatiron.plugins.http);
-app.config.env().use('file', {file: __dirname+'/config/config.json'});
+app.config.argv()
+          .env()
+          .use('file', {file: __dirname+'/config/config.json'});
 
 var transports = [];
 if(app.config.get('NODE_ENV') == 'production'){
